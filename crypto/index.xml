@@ -6,10 +6,22 @@
     <description>Recent content in Cryptos on ADB</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 21 Jul 2020 22:31:04 -0400</lastBuildDate>
+    <lastBuildDate>Wed, 22 Jul 2020 21:05:56 -0400</lastBuildDate>
     
 	<atom:link href="/crypto/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Crypto | Nookcrypt | UIUCTF 2020</title>
+      <link>/crypto/nookcrypt/</link>
+      <pubDate>Wed, 22 Jul 2020 21:05:56 -0400</pubDate>
+      
+      <guid>/crypto/nookcrypt/</guid>
+      <description>This is a sourceless Elliptic Curve Crypto (ECC) challenge. ECC is scaryyyy, but I might as well give it a try.
+Problem Tom Nook is testing a new encryption scheme for nookphones, but it seems to be a bit faulty... can you break it?
+Hints given during ctf:
+ Cosmic rays corrupted the prime with random chance in the first option. There are no faults in the second option.  Solution We were given some service running at nc chal.</description>
+    </item>
     
     <item>
       <title>Crypto | Et Tu Blathers | UIUCTF 2020</title>

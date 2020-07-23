@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="https://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.68.3" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Crypto | Nookcrypt | UIUCTF 2020 &middot; ADB</title>
+  <meta name="description" content="" />
+
+  
+  <link type="text/css" rel="stylesheet" href="/css/print.css" media="print">
+  <link type="text/css" rel="stylesheet" href="/css/poole.css">
+  <link type="text/css" rel="stylesheet" href="/css/syntax.css">
+  <link type="text/css" rel="stylesheet" href="/css/hyde.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Abril+Fatface|PT+Sans:400,400i,700">
+
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  
+
+  
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css" integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js" integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js" integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
+  
+</head>
+
+  <body class="theme-base-08 layout-reverse">
+  <aside class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="/"><h1>ADB</h1></a>
+      <p class="lead">
+       I heard blogs are cool, so here we are. 
+      </p>
+    </div>
+
+    <nav>
+      <ul class="sidebar-nav">
+        <li><a href="/">Home</a> </li>
+        <li><a href="https://github.com/adbforlife/"> Github </a></li><li><a href="https://www.linkedin.com/in/albert-gao/"> LinkedIn </a></li>
+      </ul>
+    </nav>
+
+    <p>&copy; 2020. All rights reserved. </p>
+  </div>
+</aside>
+
+    <main class="content container">
+    <div class="post">
+  <h1>Crypto | Nookcrypt | UIUCTF 2020</h1>
+  <time datetime=2020-07-22T21:05:56-0400 class="post-date">Wed, Jul 22, 2020</time>
+  <p>This is a sourceless Elliptic Curve Crypto (ECC) challenge. ECC is scaryyyy, but I might as well give it a try.</p>
+
+<h2 id="problem">Problem</h2>
+
+<p>Tom Nook is testing a new encryption scheme for nookphones, but it seems to be a bit faulty... can you break it?</p>
+
+<p>Hints given during ctf:</p>
+
+<ol>
+<li>Cosmic rays corrupted the prime with random chance in the first option.</li>
+<li>There are no faults in the second option.</li>
+</ol>
+
+<h2 id="solution">Solution</h2>
+
+<p>We were given some service running at <code>nc chal.uiuc.tf 2006</code> so let's check it out:</p>
+<pre><code>========================================
+Welcome to NookCrypt! Here we use fancy
+elliptic curve encryption to keep your 
+messages safe! Try it out!
+========================================
+1. get (encrypted) flag
+2. encrypt message
+3. quit
+========================================
+
+Option: 1
+enc(FLAG) = (0xf31ce7cb1f2c6e7107318d76bdda50c5, 0x02d979fc3122bbaffcc1111953bc184f)
+enc(&#39;hello world&#39;) = (0x4cf5afcc9bc1db0118172129b713d86a, 0xe41d8761370768aa9694b164c843dde9)
+
+========================================
+Welcome to NookCrypt! Here we use fancy
+elliptic curve encryption to keep your 
+messages safe! Try it out!
+========================================
+1. get (encrypted) flag
+2. encrypt message
+3. quit
+========================================
+
+Option: 2
+msg: ADB
+enc(0x414442) = (0x484e1ce780af07d6e50e1e6347f767df, 0x62e9d4d97fd4b2e3168cc0b5d1ef1cd0)</code></pre>
+<p>Oh man, I don't exactly know how ECC encryption works. Finally time to read more about it.. How else am I gonna solve a sourceless crypto? For anyone also trying to learn the basics, I recommend <a href="https://tools.ietf.org/html/rfc6090">RFC 6090</a>.</p>
+
+<p>As a short summary of notation, we have some elliptic curve group</p>
+
+<p><span  class="math">\[ y^2 = x^3 + ax + b \]</span></p>
+
+<p>over some field <span  class="math">\( \mathbb{F}_p \)</span>. Additionally, we have some <a href="https://mathworld.wolfram.com/GroupGenerators.html">generator</a> point <span  class="math">\(g\)</span> of one of its <a href="https://mathworld.wolfram.com/CyclicGroup.html">cyclic subgroup</a>. Encrypting message <span  class="math">\(m\)</span> is done by <span  class="math">\(g^m\)</span>, and we can't derive <span  class="math">\(m\)</span> just from <span  class="math">\(g\)</span> and <span  class="math">\(g^m\)</span> since discrete log is hard. The mathy terms here might seem confusing if you are unfamiliar with them, but it's worth it to figure out what they mean.</p>
+
+<p>Armed with basic knowledge of ECC, we could try to obtain as much information about the parameters used as possible.</p>
+
+<h3 id="derive-g">Derive g</h3>
+
+<p>The first thing I thought of is to obtain <span  class="math">\(g\)</span> by using option 2 to encrypt the integer 1, since in any group <span  class="math">\(g^1 = g\)</span>. Here's a script for that:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#f92672">from</span> pwn <span style="color:#f92672">import</span> <span style="color:#f92672">*</span>
+r <span style="color:#f92672">=</span> remote(<span style="color:#e6db74">&#39;chal.uiuc.tf&#39;</span>, <span style="color:#ae81ff">2006</span>)
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">enc</span>(n):
+    r<span style="color:#f92672">.</span>recvuntil(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;3. quit&#39;</span>)
+    r<span style="color:#f92672">.</span>sendline(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;2&#39;</span>)
+    r<span style="color:#f92672">.</span>sendline(n<span style="color:#f92672">.</span>to_bytes(<span style="color:#ae81ff">100</span>, <span style="color:#e6db74">&#39;big&#39;</span>))
+    s <span style="color:#f92672">=</span> r<span style="color:#f92672">.</span>recvuntil(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;Welcome&#39;</span>)
+    s <span style="color:#f92672">=</span> s<span style="color:#f92672">.</span>split(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;) = &#39;</span>)[<span style="color:#ae81ff">1</span>]
+    s <span style="color:#f92672">=</span> s<span style="color:#f92672">.</span>split(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)[<span style="color:#ae81ff">0</span>]
+    <span style="color:#66d9ef">return</span> eval(s)
+<span style="color:#66d9ef">print</span>(enc(<span style="color:#ae81ff">1</span>))
+<span style="color:#75715e"># (164048790688614013222215505581242564928, 52787839253935625605232456597451787076)</span></code></pre></div>
+<h3 id="derive-p">Derive p</h3>
+
+<p>Since we basically can get as many points on the curve as we want, it shouldn't be too difficult to figure out the prime we are modding our operations with. Here's my intuitive approach (probably not the most slick but does the job):</p>
+
+<p>Let <span  class="math">\((x_1, y_1), (x_2, y_2), (x_3, y_3), (x_4, y_4)\)</span> be four points on the curve. Then we know</p>
+
+<p><span  class="math">\[ 
+\begin{cases} 
+x_1^3 + ax_1 + b - y_1^2 + pk_1 = 0\\
+x_2^3 + ax_2 + b - y_2^2 + pk_2 = 0\\
+x_3^3 + ax_3 + b - y_3^2 + pk_3 = 0\\
+x_4^3 + ax_4 + b - y_4^2 + pk_4 = 0\\
+\end{cases}
+\]</span></p>
+
+<p>where <span  class="math">\(k_1, k_2, k_3, k_4\)</span> are integers and we are doing additions and multiplications above not in <span  class="math">\(\mathbb{F}_p\)</span> but in <span  class="math">\(\mathbb{Z}\)</span> (no modding). Since the points are known to us, we can simplify to</p>
+
+<p><span  class="math">\[
+\begin{cases}
+(k_1 - k_2)p - (x_1 - x_2)a = (y_1^2 - y_2^2) - (x_1^3 - x_2^3) = c_1\\
+(k_3 - k_4)p - (x_3 - x_4)a = (y_3^2 - y_4^2) - (x_3^3 - x_4^3) = c_2\\ 
+\end{cases}
+\]</span></p>
+
+<p>where <span  class="math">\(c_1, c_2\)</span> are constants we know. Then, we can cancel out <span  class="math">\(a\)</span> to get some multiple of <span  class="math">\(p\)</span>:</p>
+
+<p><span  class="math">\[
+((x_3-x_4)(k_1-k_2) - (x_1-x_2)(k_3-k_4))p \\
+= c_1(x_3-x_4) - c_2(x_1-x_2) = d
+\]</span></p>
+
+<p>where <span  class="math">\(d\)</span> is a constant we know. Ha, now we have some multiple of <span  class="math">\(p\)</span> for every 4 encrypted points. Taking gcd of them gives us <span  class="math">\(p\)</span> (factoring also works). There are probably a lot of other ways of getting the prime used here, which is</p>
+<pre><code>p
+= 0xfffffffdffffffffffffffffffffffff 
+= 340282366762482138434845932244680310783</code></pre>
+<h3 id="parameters">Parameters</h3>
+
+<p>With <span  class="math">\(p\)</span>, we can derive <span  class="math">\(a\)</span> and <span  class="math">\(b\)</span> quite easily (if you've followed the writeup to this point, this should be simple):</p>
+<pre><code>p = 340282366762482138434845932244680310783
+a = 284470887156368047300405921324061011681
+b = 126188322377389722996253562430093625949
+g = (164048790688614013222215505581242564928, 52787839253935625605232456597451787076)</code></pre>
+<h3 id="fault-attack">Fault Attack</h3>
+
+<p>We got what we wanted for the curve being used. Now let's figure out why the problem says option 1 seems to be a bit <strong>faulty</strong>. After experimenting a little bit, we see that option 1 sometimes returns just <code>err</code> instead of the normal encrypted flag:</p>
+<pre><code>========================================
+Welcome to NookCrypt! Here we use fancy
+elliptic curve encryption to keep your 
+messages safe! Try it out!
+========================================
+1. get (encrypted) flag
+2. encrypt message
+3. quit
+========================================
+
+Option: 1
+err</code></pre>
+<p>This is probably caused by the aforementioned <strong>fault</strong> in the prime sometimes. Just having err gives us nothing, so I wrote a script (with <code>from pwn import *</code>) to test if we get some different points as encrypted flags. I collected 200 pairs of <strong>faulty</strong> (encrypted flag, encrypted hello world) for further analysis (you really don't need that many to derive flag). One example would be</p>
+<pre><code>fault_flag = (0x367381f5c0d8d000fbc9f83db7224279, 0xae350396c54c3065ee8fad1dee9c4675)
+fault_hello = (0x207ef8b8f05c8a560bd56ca6ece15642, 0x769bada1ee9ef60a633fa7af616c5020)</code></pre>
+<p>So the question is, what happens if we use some random number to mod with when we compute ECC encryptions (although this problem seemed too guessy without source, the hints by problem author during ctf cleared things up a lot)?</p>
+
+<p>Ok, time for more reading. After looking around, this paper is basically all you need to understand the situation here: <a href="https://eprint.iacr.org/2003/028.pdf">https://eprint.iacr.org/2003/028.pdf</a>.</p>
+
+<p>As a short summary, if we use a composite modulus for elliptic curve multiplication by a scalar, then you can treat <span  class="math">\(q = g^\text{flag}\)</span> as a point on multiple elliptic curves with the prime factors as fields. Stack exchange provides a more thorough description <a href="https://crypto.stackexchange.com/questions/72613/elliptic-curve-discrete-log-in-a-composite-ring">here</a>. If the prime factors are small enough, then we can just derive the discrete log for</p>
+
+<p><span  class="math">\[ q = g^\text{flag} \]</span></p>
+
+<p>where g has some small <a href="https://mathworld.wolfram.com/GroupOrder.html">order</a> r on some elliptic curve. This essentially gives us flag mod <span  class="math">\(r\)</span>. If we collect enough of these, we could use Chinese Remainder Theorem (CRT) to solve for flag! Now that we've got a plan, let's execute it with sage.</p>
+
+<h3 id="derive-modulus">Derive modulus</h3>
+
+<p>At this point, if you are confused about how faulty points or faulty primes still allow encryption to go through, or about how we have points end up in some other elliptic curve, it might be helpful to reread the linked paper. It certainly made it clearer for me. The tl;dr for that is that elliptic curve point addition and scalar multiplication do not use the <span  class="math">\(b\)</span> parameter so calculations happen as if they were on a different elliptic curve with a different <span  class="math">\(b\)</span>.</p>
+
+<p>For each pair of faulty flag and hello world, we know of a total of three points on the new curve. We could then use <span  class="math">\(gcd\)</span> to derive it:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">derive_modulus</span>(fault_flag, fault_hello):
+    c1 <span style="color:#f92672">=</span> g[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> g[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span> a <span style="color:#f92672">*</span> g[<span style="color:#ae81ff">0</span>]
+    c2 <span style="color:#f92672">=</span> fault_flag[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> fault_flag[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span> a <span style="color:#f92672">*</span> fault_flag[<span style="color:#ae81ff">0</span>]
+    c3 <span style="color:#f92672">=</span> fault_hello[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> fault_hello[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span> a <span style="color:#f92672">*</span> fault_hello[<span style="color:#ae81ff">0</span>]
+    modulus <span style="color:#f92672">=</span> gcd(c1<span style="color:#f92672">-</span>c2, c2<span style="color:#f92672">-</span>c3)
+    <span style="color:#66d9ef">if</span> abs(modulus <span style="color:#f92672">-</span> p) <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0xffffffff</span>:
+        <span style="color:#66d9ef">return</span> None
+    <span style="color:#66d9ef">return</span> modulus</code></pre></div>
+<p>After experimentation, we know that the new modulus only changes the last 32 bits of the original prime <span  class="math">\(p\)</span>, so we could just ignore derived moduli that don't give us something close to <span  class="math">\(p\)</span>.</p>
+
+<h3 id="derive-orders-and-mods">Derive orders and mods</h3>
+
+<p>For each new modulus, if it has a small prime factor, we want to derive <span  class="math">\(f\)</span> and <span  class="math">\(r\)</span> such that</p>
+
+<p><span  class="math">\[ flag \equiv f \mod r \]</span></p>
+
+<p>where <span  class="math">\(g^\text{flag} = \text{fault\_flag}\)</span> on new curve and <span  class="math">\(r\)</span> is the order of <span  class="math">\(g\)</span>. We can derive these as follows:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">derive_om</span>(modulus, fault_flag, fault_hello):
+    <span style="color:#75715e"># New b for new curve</span>
+    bf <span style="color:#f92672">=</span> (fault_flag[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> fault_flag[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span> a <span style="color:#f92672">*</span> fault_flag[<span style="color:#ae81ff">0</span>]) <span style="color:#f92672">%</span> modulus
+    <span style="color:#75715e"># New curve</span>
+    Ef <span style="color:#f92672">=</span> EllipticCurve(Zmod(modulus), [a, bf])
+    <span style="color:#66d9ef">try</span>:
+        pt <span style="color:#f92672">=</span> int_hello <span style="color:#f92672">*</span> Ef(g)
+        <span style="color:#66d9ef">assert</span>(pt <span style="color:#f92672">==</span> Ef(fault_hello))
+    <span style="color:#66d9ef">except</span>:
+        <span style="color:#66d9ef">return</span> None
+
+    <span style="color:#75715e"># Factor modulus</span>
+    factors <span style="color:#f92672">=</span> list(map(<span style="color:#66d9ef">lambda</span> x: x[<span style="color:#ae81ff">0</span>], list(factor(modulus))))
+    <span style="color:#75715e"># Let&#39;s just use the small prime factors</span>
+    factors <span style="color:#f92672">=</span> list(filter(<span style="color:#66d9ef">lambda</span> x: x <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">0xffffffffff</span>, factors))
+    <span style="color:#75715e"># For each curve on small prime field, find the new b parameters</span>
+    bs <span style="color:#f92672">=</span> [solve_b(factor, g) <span style="color:#66d9ef">for</span> factor <span style="color:#f92672">in</span> factors]
+    <span style="color:#75715e"># New curves on prime fields</span>
+    Es <span style="color:#f92672">=</span> [EllipticCurve(GF(factors[i]), [a, bs[i]]) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(bs))]
+    <span style="color:#75715e"># Orders of g</span>
+    orders <span style="color:#f92672">=</span> [Es[i](g)<span style="color:#f92672">.</span>order() <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(bs))]
+    <span style="color:#75715e"># Solve discrete log cuz we CAN (also cuz sage is too powerful)</span>
+    mods <span style="color:#f92672">=</span> [discrete_log(Es[i](fault_flag), Es[i](g), orders[i], operation<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;+&#39;</span>) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(bs))]
+    <span style="color:#66d9ef">return</span> orders, mods</code></pre></div>
+<h3 id="get-flag">Get flag</h3>
+
+<p>We could get as many faulty encrypted flags as we wanted so I just used the first fifty I saw to get some CRT equations. To solve CRT, we have a short script here:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">crt</span>(orders, mods):
+    M <span style="color:#f92672">=</span> prod(orders)
+    Ms <span style="color:#f92672">=</span> [M <span style="color:#f92672">//</span> orders[i] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(orders))]
+    parts <span style="color:#f92672">=</span> [Ms[i] <span style="color:#f92672">*</span> int(pow(Ms[i], <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, orders[i])) <span style="color:#f92672">*</span> mods[i] <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(len(orders))]
+    <span style="color:#66d9ef">return</span> sum(parts) <span style="color:#f92672">%</span> M</code></pre></div>
+<p>This gives us flag</p>
+<pre><code>uiuctf{th4t_5ur3_w4s_f4ulty_huh?}</code></pre>
+<p>For anyone interested, overall script is <a href="/uiuctf20/solve.sage">solve.sage</a>.</p>
+
+<h3 id="comments">Comments</h3>
+
+<ol>
+<li>I did not end up solving this challenge during the CTF since I only read about the fault attacks about 10 minutes before the competition ended.. I did solve it the next day though!</li>
+<li>For anyone having trouble with running sage locally (it broke for me for whatever reason), you could try their docker and jupyter notebook:
+<code>docker run -p8888:8888 sagemath/sagemath:latest sage-jupyter</code></li>
+</ol>
+
+</div>
+
+
+    </main>
+
+    
+      
+    
+  </body>
+</html>
