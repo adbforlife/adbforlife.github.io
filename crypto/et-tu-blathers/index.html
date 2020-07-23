@@ -58,8 +58,53 @@
 <p>Wrap your result in uiuctf{}</p>
 <p>You may find a wordlist of commonly used words helpful for this challenge</p>
 <p>To clarify The first line is Ciphertext, the other lines are not.</p>
-<p><a href="/et-tu-blathers.txt">Download</a></p>
+<p><a href="/uiuctf20/crypto-warmup">crypto-warmup</a></p>
 <h2 id="solution">Solution</h2>
+<p>The problem description &lsquo;Vigenerete&rsquo; dressing hints at the use of <a href="https://en.wikipedia.org/wiki/Vigen%C3%A8re_cipher">Vigenere</a> cipher. In short, this is a cipher where A + A = A and ADB + BDA = BGB, calculated mod 26 using the English alphabet.</p>
+<p>Now we have a basic idea about the hints, let&rsquo;s look at the unknown 1006-line text file:</p>
+<pre><code>HVTRQYPZACMZQOXMGFBDHIXANICCIN
+XRFXVMKIUQHXNOLVBRKJBSYPJJOGWW
+QNRQHKODVKQYLCBKLORVOBYCDBGBEF
+SXZDJVYIAXZIEXCUIICKFSVGIJSAWR
+KJYOENPAEOQPTGRYCHNMRLMMGMMGKY
+QOQPLFQENMEOBVJFEZNMAOFFZPERUG
+...
+</code></pre><p>Woah, I have no idea what this is saying. In general, when there&rsquo;s unknown ciphertext, we throw it in some <a href="https://www.dcode.fr/frequency-analysis">frequency analysis</a> just to get some clues. Nope. Frequency of each character is about the same.</p>
+<p>Okay, let&rsquo;s look at the rest of the hints. Taking first line as ciphertext in a vigenere cipher, we just need a key to calculate the message. At this point, we might as well just try each line as key and see if the result is English.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">alph <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">minus</span>(a, b):
+    res <span style="color:#f92672">=</span> [(alph<span style="color:#f92672">.</span>index(a[k]) <span style="color:#f92672">-</span> alph<span style="color:#f92672">.</span>index(b[k])) <span style="color:#f92672">%</span> <span style="color:#ae81ff">26</span> <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> range(len(a))]
+    res <span style="color:#f92672">=</span> list(map(<span style="color:#66d9ef">lambda</span> x: alph[x], res))
+    <span style="color:#66d9ef">return</span> bytes(res)
+
+lines <span style="color:#f92672">=</span> open(<span style="color:#e6db74">&#39;crypto-warmup&#39;</span>, <span style="color:#e6db74">&#39;rb&#39;</span>)<span style="color:#f92672">.</span>read()<span style="color:#f92672">.</span>rstrip()<span style="color:#f92672">.</span>split(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)
+possibles <span style="color:#f92672">=</span> [minus(lines[<span style="color:#ae81ff">0</span>], l) <span style="color:#66d9ef">for</span> l <span style="color:#f92672">in</span> lines[<span style="color:#ae81ff">1</span>:]]
+[<span style="color:#66d9ef">print</span>(p) <span style="color:#66d9ef">for</span> p <span style="color:#f92672">in</span> possibles[:<span style="color:#ae81ff">20</span>]]
+</code></pre></div><p>This gives:</p>
+<pre><code>KEOUVMFRGMFCDAMRFORUGQZLEZOWMR
+RICBJOBWFSWBFMWCVRKITHZYKHWBEI
+PYUOHDRRAFNRMRVSYXZTCQCUFZKCMW
+XMVDMLAZWOWKXIGOEYORQXLOHWQWYP
+RHDCFTZVNQILPTOHCGORHUSVOTYLOH
+FGKTOEWHUETMIRHMPWSWTJCWDCLZVM
+...
+</code></pre><p>We still need to find which line looks at English the most. To do this, we assign each line a frequency score and rank them. For our purposes here, it&rsquo;s enough to assign each English letter a score of its <a href="https://en.wikipedia.org/wiki/Letter_frequency">letter frequency</a> proportion and sum the letter scores for each line. The top results are here:</p>
+<pre><code>(1.38037, b'UEDEHYNYOHJKAAEITCOMNLIIJNFNGH')
+(1.3693, b'TWVMEODORHSTSBDYWCBDLCANIEEOWS')
+(1.36799, b'HMEVACIFTRORSCVXCDNOTENEOMDAJW')
+(1.36127, b'TNKRLSTWRRFTEDWZNBBSDKREIVOELA')
+(1.33832, b'EEHHIDHETLSIGDQIJWZEOPIDFLZSTQ')
+(1.33214, b'AITHPEKYKHCWSZYEFTSTQNENXIROBT')
+(1.33066, b'WYEICVDMPNEERDAEQPKBYNJASENGFE')
+(1.31041, b'HSCNBANMOTPOFEFWFUPIEHIITIYAKF')
+(1.29099, b'OHHECKFRICKICANTSTOPTYPINGLOUD')
+(1.28721, b'SQRKNETKNNHATLLLPDSGTEQSDVZAPT')
+...
+</code></pre><p>We have our flag here:</p>
+<pre><code>uiuctf{OHHECKFRICKICANTSTOPTYPINGLOUD}
+</code></pre><p><a href="/uiuctf20/exploit.py">exploit.py</a></p>
+<h2 id="comments">Comments</h2>
+<p>I don&rsquo;t think the hint of using wordlist of commonly used words was any helpful for me. Even the random texts had some common words that would be false positives.</p>
 
 </div>
 
